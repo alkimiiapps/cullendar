@@ -10,7 +10,8 @@ export default function build(options: BuildViewOptions = {}): BuildViewResult {
   const firstDayOfWeek = options.firstDayOfWeek ?? DEFAULTS.firstDayOfWeek
 
   const date = Temporal.PlainDate.from(options.date || Temporal.Now.plainDateISO())
-  const start = date.add({ days: (firstDayOfWeek - date.dayOfWeek) % 7 })
+  const daysFromWeekStart = (date.dayOfWeek - firstDayOfWeek + 7) % 7
+  const start = date.subtract({ days: daysFromWeekStart })
   const dates = Array.from({ length: nWeeks * 7 }, (_v, i) => start.add({ days: i }).toString())
 
   return {

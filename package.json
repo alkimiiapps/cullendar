@@ -22,7 +22,6 @@
     "./style.css": "./dist/cullendar.css"
   },
   "scripts": {
-    "postinstall": "chmod +x node_modules/@esbuild/linux-*/bin/esbuild || true",
     "dev": "cd dev && vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview"

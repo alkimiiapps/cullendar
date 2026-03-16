@@ -139,7 +139,9 @@ declare interface BuildApiResult extends UnwrapRef<{
     resources: ComputedRef<BuildResourcesResult>;
     callbacks: ComputedRef<BuildCallbacksResult>;
     utils: BuildUtilsResult;
-    resizeMap: Ref<Map<string, string[]>>;
+    resizeDatesSet: Ref<Set<string>>;
+    resizeResourcesSet: Ref<Set<string>>;
+    dayWidth: Ref<number>;
 }> {
 }
 
@@ -149,6 +151,7 @@ declare interface BuildCallbacksResult {
     onMoveEvent: (payload: DragDropCallbackPayload) => void;
     onResizeEvent: (payload: OnResizeEventCallbackPayload) => void;
     onBeforeDropEvent: (payload: DragDropCallbackPayload) => boolean;
+    onDayEnter: (payload: DragDropCallbackPayload) => void;
 }
 
 declare interface BuildElementsResult {
@@ -242,6 +245,8 @@ declare interface InternalResourceGroup {
 declare interface OnResizeEventCallbackPayload {
     event: Event_2;
     resource: InternalResource;
+    resources: Resource[];
+    date: string;
     dates: string[];
     view: BuildViewResult;
 }

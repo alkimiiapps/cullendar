@@ -12,9 +12,11 @@
 // Libraries
 import { ref, toRefs, inject } from 'vue'
 // Types
-import type { Event, InternalResource, BuildApiResult } from '../types'
+import type { Event, ResizeResourceBoundary, InternalResource, BuildApiResult } from '../types'
 // API
 import Constants from '../api/Constants'
+// Composables
+import useEdgeScroll from '../composables/EdgeScroll'
 
 const props = defineProps<{
   event: Event,
@@ -23,62 +25,121 @@ const props = defineProps<{
 }>()
 
 const api = inject('api') as BuildApiResult
-const { elements, view, layout, callbacks, resizeMap } = toRefs(api)
+const { dayWidth, elements, view, resources, layout, callbacks, utils, resizeDatesSet, resizeResourcesSet } = toRefs(api)
 
-let prevDeltaDays: number = 0
+let prevDeltaDays = 0
+let prevDeltaBoundary = 0
 
-const startX = ref(0)
-const daySize = ref(0)
+const resourceBoundaries: ResizeResourceBoundary[] = []
+
 const isResizing = ref(false)
+const startX = ref(0)
+const startY = ref(0)
+
+const { scrolledX, scrolledY, start: startEdgeScroll, stop: stopEdgeScroll } = useEdgeScroll(elements.value.timeline)
 
 function onMousedown(e: MouseEvent): void {
-  const colEl = document.querySelector('.cullendar-timeline-virtual-col') as HTMLElement
-
+  startX.value = e.clientX
+  startY.value = e.clientY
   isResizing.value = true
-  startX.value = e.x
-  daySize.value = colEl.clientWidth
+
+  resizeDatesSet.value.add(props.date)
+  resizeResourcesSet.value.add(props.resource.id)
+
+  setResourceBoundaries()
 
   document.addEventListener('mousemove', onMousemove)
   document.addEventListener('mouseup', onMouseup)
+
   elements.value.calendar.classList.add(Constants.RESIZING_CLASS)
+  startEdgeScroll()
 }
 function onMousemove(e: MouseEvent): void {
-  const deltaX = Math.max(0, e.x - startX.value)
-  const deltaDays = Math.ceil(deltaX / (daySize.value + layout.value.gap))
+  const deltaX = Math.max(0, e.clientX - startX.value + scrolledX.value)
+  const deltaY = Math.max(0, e.clientY - startY.value + scrolledY.value)
 
-  if (prevDeltaDays === deltaDays)
-    return
-
-  prevDeltaDays = deltaDays
-  resizeMap.value.set(props.resource.id, getDeltaDays(deltaDays))
+  setDeltaResources(deltaY)
+  setDeltaDays(deltaX)
 }
 function onMouseup(): void {
-  const dates = resizeMap.value.get(props.resource.id) || []
+  const resources = Array.from(resizeResourcesSet.value.values()).slice(1).map(id => utils.value.getResource(id)!)
+  const dates = Array.from(resizeDatesSet.value.values()).slice(1)
 
   prevDeltaDays = 0
+  prevDeltaBoundary = 0
+
+  resizeResourcesSet.value.clear()
+  resizeDatesSet.value.clear()
   isResizing.value = false
-  startX.value = 0
-  resizeMap.value.clear()
 
   document.removeEventListener('mousemove', onMousemove)
   document.removeEventListener('mouseup', onMouseup)
-  elements.value.calendar.classList.remove(Constants.RESIZING_CLASS)
 
-  if (!dates.length)
+  elements.value.calendar.classList.remove(Constants.RESIZING_CLASS)
+  stopEdgeScroll()
+
+  if (!dates.length && !resources.length)
     return
 
   callbacks.value.onResizeEvent({
     event: props.event,
     resource: props.resource,
+    resources,
+    date: props.date,
     dates,
     view: view.value
   })
 }
-function getDeltaDays(delta: number): string[] {
-  const dates = view.value.dates
-  const index = dates.indexOf(props.date) + 1
+function setDeltaResources(deltaY: number): void {
+  while (prevDeltaBoundary < resourceBoundaries.length && deltaY > resourceBoundaries[prevDeltaBoundary].bottom) {
+    resizeResourcesSet.value.add(resourceBoundaries[prevDeltaBoundary].id)
+    prevDeltaBoundary++
+  }
 
-  return dates.slice(index, index + delta)
+  while (prevDeltaBoundary > 0 && deltaY < resourceBoundaries[prevDeltaBoundary - 1].top) {
+    resizeResourcesSet.value.delete(resourceBoundaries[prevDeltaBoundary - 1].id)
+    prevDeltaBoundary--
+  }
+}
+function setDeltaDays(deltaX: number): void {
+  const delta = Math.ceil(deltaX / (dayWidth.value + layout.value.gap))
+
+  if (prevDeltaDays === delta)
+    return
+
+  const dates = view.value.dates
+  const index = dates.indexOf(props.date)
+
+  prevDeltaDays = delta
+  resizeDatesSet.value = new Set<string>(dates.slice(index, index + delta + 1))
+}
+function setResourceBoundaries(): ResizeResourceBoundary[] {
+  let y = layout.value.eventSize
+  let include = false
+
+  resourceBoundaries.length = 0
+
+  for (const [id, resource] of resources.value) {
+    if ('isGroup' in resource)
+      continue
+
+    if (include) {
+      const size = resource.maxEvents * layout.value.eventSize
+      const boundary: ResizeResourceBoundary = {
+        id,
+        top: y,
+        bottom: y + size
+      }
+
+      y += size
+      resourceBoundaries.push(boundary)
+    }
+
+    if (id === props.resource.id)
+      include = true
+  }
+
+  return resourceBoundaries
 }
 </script>
 

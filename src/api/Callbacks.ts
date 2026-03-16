@@ -6,6 +6,7 @@ export default function build(options: BuildCallbacksOptions = {}): BuildCallbac
     onAddEvent: options.onAddEvent || ((_: DragDropCallbackPayload) => {}),
     onMoveEvent: options.onMoveEvent || ((_: DragDropCallbackPayload) => {}),
     onResizeEvent: options.onResizeEvent || ((_: OnResizeEventCallbackPayload) => {}),
-    onBeforeDropEvent: options.onBeforeDropEvent || ((_: DragDropCallbackPayload) => true)
+    onBeforeDropEvent: options.onBeforeDropEvent || ((_: DragDropCallbackPayload) => true),
+    onDayEnter: options.onDayEnter || ((_: DragDropCallbackPayload) => {})
   }
 }

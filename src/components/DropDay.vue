@@ -1,5 +1,5 @@
 <template>
-  <div :class="classes">
+  <div :class="classes" @mouseenter="onMouseenter">
     <span
       v-if="droppable && resource.isEventDroppable"
       class="cullendar-day-dropzone"
@@ -34,10 +34,10 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), { droppable: true })
 
 const api = inject('api') as BuildApiResult
-const { view, callbacks, resizeMap } = toRefs(api)
+const { view, callbacks, resizeResourcesSet, resizeDatesSet } = toRefs(api)
 
 const isDragOver = ref(false)
-const isResizeOver = computed(() => !!resizeMap.value.get(props.resource.id)?.includes(props.date))
+const isResizeOver = computed(() => resizeResourcesSet.value.has(props.resource.id) && resizeDatesSet.value.has(props.date))
 
 const classes = computed(() => [
   isDragOver.value && props.dragoverClass,
@@ -96,6 +96,9 @@ function toPayload(options: ToPayloadOptions = {}): DragDropCallbackPayload {
     resource: props.resource,
     view: view.value
   }
+}
+function onMouseenter(): void {
+  callbacks.value.onDayEnter(toPayload())
 }
 </script>
 

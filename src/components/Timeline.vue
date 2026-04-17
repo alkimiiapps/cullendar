@@ -29,7 +29,7 @@
 
 <script lang="ts" setup>
 // Libraries
-import { ref, computed, toRefs, watch, onMounted, onUnmounted, inject, type CSSProperties } from 'vue'
+import { computed, toRefs, watch, onMounted, onUnmounted, inject, type CSSProperties } from 'vue'
 import { useVirtualizer, type VirtualItem } from '@tanstack/vue-virtual'
 // Types
 import type { InternalResource, InternalResourceGroup, BuildApiResult } from '../types'
@@ -46,16 +46,15 @@ const props = defineProps<{
 }>()
 
 const api = inject('api') as BuildApiResult
-const { id, elements, layout } = toRefs(api)
+const { id, dayWidth, elements, layout } = toRefs(api)
 
 let observer: ResizeObserver
-const daySize = ref(layout.value.daySize)
 
 const options = computed(() => ({
   horizontal: true,
   count: props.columns.length,
   getScrollElement: () => elements.value?.timeline,
-  estimateSize: () => daySize.value,
+  estimateSize: () => dayWidth.value,
   gap: layout.value.gap,
   overscan: layout.value.overscan
 }))
@@ -82,22 +81,22 @@ function updateDaySize(rectWidth?: number): void {
   const totalWidth = clientWidth - totalGap
   const newDaySize = Math.max(layout.value.daySize, Math.floor(totalWidth / props.columns.length))
 
-  if (newDaySize === daySize.value)
+  if (newDaySize === dayWidth.value)
     return
 
-  daySize.value = newDaySize
+  dayWidth.value = newDaySize
   virtualizer.value.measure()
 }
 function toHeadStyle(col: VirtualItem): CSSProperties {
   return {
     height: toPx(layout.value.dayHeadSize),
-    width: toPx(daySize.value),
+    width: toPx(dayWidth.value),
     transform: `translateX(${toPx(col.start)}) translateY(0)`
   }
 }
 function toColStyle(row: VirtualItem, col: VirtualItem): CSSProperties {
   return {
-    width: toPx(daySize.value),
+    width: toPx(dayWidth.value),
     height: toPx(row.size),
     transform: `translateX(${toPx(col.start)}) translateY(${toPx(row.start)})`
   }

@@ -50,7 +50,9 @@ export interface BuildApiResult extends UnwrapRef<{
   resources: ComputedRef<BuildResourcesResult>,
   callbacks: ComputedRef<BuildCallbacksResult>,
   utils: BuildUtilsResult,
-  resizeMap: Ref<Map<string, string[]>>
+  resizeDatesSet: Ref<Set<string>>,
+  resizeResourcesSet: Ref<Set<string>>,
+  dayWidth: Ref<number>
 }> {}
 
 export interface BuildViewOptions {
@@ -102,7 +104,8 @@ export interface BuildCallbacksOptions {
   onAddEvent?: () => void,
   onMoveEvent?: () => void,
   onResizeEvent?: () => void,
-  onBeforeDropEvent?: () => boolean
+  onBeforeDropEvent?: () => boolean,
+  onDayEnter?: () => void
 }
 
 export interface BuildCallbacksResult {
@@ -111,6 +114,7 @@ export interface BuildCallbacksResult {
   onMoveEvent: (payload: DragDropCallbackPayload) => void;
   onResizeEvent: (payload: OnResizeEventCallbackPayload) => void;
   onBeforeDropEvent: (payload: DragDropCallbackPayload) => boolean;
+  onDayEnter: (payload: DragDropCallbackPayload) => void
 }
 
 export interface BuildUtilsResult {
@@ -123,6 +127,12 @@ export type DateEventsMap = Map<string, Set<Event>>
 export type BuildEventsResult = Map<string, DateEventsMap>
 
 export type BuildResourcesResult = Map<string, InternalResourceGroup | InternalResource>
+
+export interface ResizeResourceBoundary {
+  id: string,
+  top: number,
+  bottom: number
+}
 
 export interface DragDropNewTimesResult {
   start: string,
@@ -144,6 +154,8 @@ export interface DragDropCallbackPayload extends ToPayloadOptions {
 export interface OnResizeEventCallbackPayload {
   event: Event,
   resource: InternalResource,
+  resources: Resource[],
+  date: string,
   dates: string[],
   view: BuildViewResult
 }

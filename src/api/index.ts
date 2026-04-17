@@ -15,7 +15,9 @@ import buildUtils from './Utils'
 export default function create(options: BuildApiOptions = {}): BuildApiResult {
   const id = randomString()
   const elements = ref()
-  const resizeMap = ref(new Map())
+  const resizeDatesSet = ref(new Set<string>())
+  const resizeResourcesSet = ref(new Set<string>())
+  const dayWidth = ref(0)
 
   const view = computed(() => buildView(options.view))
   const layout = computed(() => buildLayout(options.layout))
@@ -37,7 +39,9 @@ export default function create(options: BuildApiOptions = {}): BuildApiResult {
     resources,
     callbacks,
     utils,
-    resizeMap
+    resizeDatesSet,
+    resizeResourcesSet,
+    dayWidth
   })
 
   return api

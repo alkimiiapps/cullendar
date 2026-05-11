@@ -181,10 +181,11 @@ declare interface BuildUtilsResult {
 }
 
 declare interface BuildViewResult {
+    period: Period;
     start: string;
     end: string;
     timezone: string;
-    nWeeks: number;
+    span: number;
     firstDayOfWeek: number;
     dates: string[];
 }
@@ -250,6 +251,8 @@ declare interface OnResizeEventCallbackPayload {
     dates: string[];
     view: BuildViewResult;
 }
+
+declare type Period = 'days' | 'weeks' | 'months';
 
 declare interface Props {
     date: string;

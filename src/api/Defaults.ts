@@ -1,18 +1,9 @@
-export interface DefaultOptions {
-  timezone: string
-  nWeeks: number
-  firstDayOfWeek: number
-  daySize: number
-  dayHeadSize: number
-  eventSize: number
-  resourceGroupSize: number
-  gap: number
-  overscan: number
-}
+import type { DefaultOptions } from '../types'
 
 const DEFAULTS: DefaultOptions = {
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  nWeeks: 1,
+  period: 'weeks',
+  span: 1,
   firstDayOfWeek: 1,
   daySize: 160,
   dayHeadSize: 32,

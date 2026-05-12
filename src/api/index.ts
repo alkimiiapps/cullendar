@@ -1,5 +1,5 @@
 // Libraries
-import { ref, computed, reactive, unref, watch } from 'vue'
+import { ref, computed, reactive, toValue, watch } from 'vue'
 // Types
 import type { BuildApiOptions, BuildApiResult } from '../types'
 // Utils
@@ -19,13 +19,13 @@ export default function create(options: BuildApiOptions = {}): BuildApiResult {
   const resizeResourcesSet = ref(new Set<string>())
   const dayWidth = ref(0)
 
-  const view = computed(() => buildView(options.view))
-  const layout = computed(() => buildLayout(options.layout))
+  const view = computed(() => buildView(toValue(options.view)))
+  const layout = computed(() => buildLayout(toValue(options.layout)))
 
-  const events = computed(() => buildEvents(unref(options.events), view.value.timezone))
-  const resources = computed(() => buildResources(unref(options.resources), events.value))
+  const events = computed(() => buildEvents(toValue(options.events), view.value.timezone))
+  const resources = computed(() => buildResources(toValue(options.resources), events.value))
 
-  const callbacks = computed(() => buildCallbacks(options.callbacks))
+  const callbacks = computed(() => buildCallbacks(toValue(options.callbacks)))
   const utils = buildUtils(events, resources)
 
   watch(view, () => callbacks.value.onView(view.value))

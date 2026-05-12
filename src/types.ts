@@ -1,4 +1,6 @@
-import { type ComputedRef, type Ref, type UnwrapRef } from 'vue'
+import type { ComputedRef, Ref, UnwrapRef, MaybeRef, MaybeRefOrGetter } from 'vue'
+
+export type Period = 'days' | 'weeks' | 'months'
 
 export interface Event {
   id: string,
@@ -33,12 +35,25 @@ export interface InternalResourceGroup {
   close: () => void
 }
 
+export interface DefaultOptions {
+  period: Period,
+  timezone: string,
+  span: number,
+  firstDayOfWeek: number,
+  daySize: number,
+  dayHeadSize: number,
+  eventSize: number,
+  resourceGroupSize: number,
+  gap: number,
+  overscan: number
+}
+
 export interface BuildApiOptions {
-  view?: BuildViewOptions,
-  layout?: BuildLayoutOptions,
-  events?: Event[],
-  resources?: Resource[],
-  callbacks?: BuildCallbacksOptions
+  view?: MaybeRefOrGetter<BuildViewOptions>,
+  layout?: MaybeRefOrGetter<BuildLayoutOptions>,
+  events?: MaybeRefOrGetter<Event[]>,
+  resources?: MaybeRefOrGetter<Resource[]>,
+  callbacks?: MaybeRefOrGetter<BuildCallbacksOptions>
 }
 
 export interface BuildApiResult extends UnwrapRef<{
@@ -56,17 +71,19 @@ export interface BuildApiResult extends UnwrapRef<{
 }> {}
 
 export interface BuildViewOptions {
-  nWeeks?: number,
-  firstDayOfWeek?: number,
-  date?: string,
-  timezone?: string
+  period?: MaybeRefOrGetter<Period>,
+  span?: MaybeRefOrGetter<number>,
+  firstDayOfWeek?: MaybeRefOrGetter<number>,
+  date?: MaybeRefOrGetter<string>,
+  timezone?: MaybeRefOrGetter<string>
 }
 
 export interface BuildViewResult {
+  period: Period,
   start: string,
   end: string,
   timezone: string,
-  nWeeks: number,
+  span: number,
   firstDayOfWeek: number,
   dates: string[]
 }
@@ -78,14 +95,14 @@ export interface BuildElementsResult {
 }
 
 export interface BuildLayoutOptions {
-  daySize?: number,
-  dayHeadSize?: number,
-  eventSize?: number,
-  resourceGroupSize?: number,
-  resourcesClass?: string,
-  timelineClass?: string,
-  gap?: number,
-  overscan?: number
+  daySize?: MaybeRefOrGetter<number>,
+  dayHeadSize?: MaybeRefOrGetter<number>,
+  eventSize?: MaybeRefOrGetter<number>,
+  resourceGroupSize?: MaybeRefOrGetter<number>,
+  resourcesClass?: MaybeRefOrGetter<string>,
+  timelineClass?: MaybeRefOrGetter<string>,
+  gap?: MaybeRefOrGetter<number>,
+  overscan?: MaybeRefOrGetter<number>
 }
 
 export interface BuildLayoutResult {
@@ -100,12 +117,12 @@ export interface BuildLayoutResult {
 }
 
 export interface BuildCallbacksOptions {
-  onView?: () => void,
-  onAddEvent?: () => void,
-  onMoveEvent?: () => void,
-  onResizeEvent?: () => void,
-  onBeforeDropEvent?: () => boolean,
-  onDayEnter?: () => void
+  onView?: MaybeRef<(view: BuildViewResult) => void>,
+  onAddEvent?: MaybeRef<(payload: DragDropCallbackPayload) => void>,
+  onMoveEvent?: MaybeRef<(payload: DragDropCallbackPayload) => void>,
+  onResizeEvent?: MaybeRef<(payload: OnResizeEventCallbackPayload) => void>,
+  onBeforeDropEvent?: MaybeRef<(payload: DragDropCallbackPayload) => boolean>,
+  onDayEnter?: MaybeRef<(payload: DragDropCallbackPayload) => void>
 }
 
 export interface BuildCallbacksResult {

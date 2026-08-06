@@ -1,15 +1,15 @@
 import type { ComputedRef, Ref, UnwrapRef, MaybeRef, MaybeRefOrGetter } from 'vue'
 
-export type Period = 'days' | 'weeks' | 'months'
+export type Duration = 'days' | 'weeks' | 'months' | 'years'
 
-export interface Event {
+export interface Event extends Record<string, any> {
   id: string,
   start: string,
   end: string,
   resourceId: string | string[]
 }
 
-export interface Resource {
+export interface Resource extends Record<string, any> {
   id: string,
   nOrder?: number,
   isEventDroppable?: boolean,
@@ -21,7 +21,7 @@ export interface InternalResource {
   nOrder?: number,
   isEventDroppable: boolean,
   maxEvents: number,
-  data: object
+  data: Record<string, any>
 }
 
 export interface InternalResourceGroup {
@@ -29,17 +29,17 @@ export interface InternalResourceGroup {
   nOrder?: number,
   isGroup: true,
   isCollapsed: boolean,
-  resources: Resource[],
-  data: object,
+  resources: InternalResource[],
+  data: Record<string, any>,
   open: () => void,
   close: () => void
 }
 
 export interface DefaultOptions {
-  period: Period,
+  unit: Duration,
+  period: Duration,
   timezone: string,
   span: number,
-  firstDayOfWeek: number,
   daySize: number,
   dayHeadSize: number,
   eventSize: number,
@@ -71,7 +71,8 @@ export interface BuildApiResult extends UnwrapRef<{
 }> {}
 
 export interface BuildViewOptions {
-  period?: MaybeRefOrGetter<Period>,
+  unit?: MaybeRefOrGetter<Duration>,
+  period?: MaybeRefOrGetter<Duration>,
   span?: MaybeRefOrGetter<number>,
   firstDayOfWeek?: MaybeRefOrGetter<number>,
   date?: MaybeRefOrGetter<string>,
@@ -79,12 +80,13 @@ export interface BuildViewOptions {
 }
 
 export interface BuildViewResult {
-  period: Period,
+  unit: Duration,
+  period: Duration,
   start: string,
   end: string,
   timezone: string,
   span: number,
-  firstDayOfWeek: number,
+  firstDayOfWeek?: number,
   dates: string[]
 }
 

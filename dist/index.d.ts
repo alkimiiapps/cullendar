@@ -181,12 +181,13 @@ declare interface BuildUtilsResult {
 }
 
 declare interface BuildViewResult {
-    period: Period;
+    unit: Duration;
+    period: Duration;
     start: string;
     end: string;
     timezone: string;
     span: number;
-    firstDayOfWeek: number;
+    firstDayOfWeek?: number;
     dates: string[];
 }
 
@@ -217,7 +218,9 @@ export { DragEvent_2 as DragEvent }
 
 export declare const DropDay: __VLS_WithTemplateSlots_3<typeof __VLS_component_3, __VLS_TemplateResult_3["slots"]>;
 
-declare interface Event_2 {
+declare type Duration = 'days' | 'weeks' | 'months' | 'years';
+
+declare interface Event_2 extends Record<string, any> {
     id: string;
     start: string;
     end: string;
@@ -229,7 +232,7 @@ declare interface InternalResource {
     nOrder?: number;
     isEventDroppable: boolean;
     maxEvents: number;
-    data: object;
+    data: Record<string, any>;
 }
 
 declare interface InternalResourceGroup {
@@ -237,8 +240,8 @@ declare interface InternalResourceGroup {
     nOrder?: number;
     isGroup: true;
     isCollapsed: boolean;
-    resources: Resource[];
-    data: object;
+    resources: InternalResource[];
+    data: Record<string, any>;
     open: () => void;
     close: () => void;
 }
@@ -252,8 +255,6 @@ declare interface OnResizeEventCallbackPayload {
     view: BuildViewResult;
 }
 
-declare type Period = 'days' | 'weeks' | 'months';
-
 declare interface Props {
     date: string;
     resource: InternalResource;
@@ -265,7 +266,7 @@ declare interface Props {
 
 export declare const ResizeHandle: __VLS_WithTemplateSlots_4<typeof __VLS_component_4, __VLS_TemplateResult_4["slots"]>;
 
-declare interface Resource {
+declare interface Resource extends Record<string, any> {
     id: string;
     nOrder?: number;
     isEventDroppable?: boolean;

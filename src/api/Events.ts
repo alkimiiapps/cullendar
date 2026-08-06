@@ -1,8 +1,7 @@
-// Libraries
-import { Temporal } from 'temporal-polyfill'
 // Types
 import type { Event, BuildEventsResult } from '../types'
 // Utils
+import toPlainDateString from '../utils/date/ToPlainDateString'
 import toArray from '../utils/ToArray'
 import getOrSet from '../utils/map/GetOrSet'
 
@@ -11,7 +10,7 @@ export default function build(events: Event[] = [], timezone: string): BuildEven
 
   for (var i = 0; i < events.length; i++) {
     const event = events[i]
-    const date = Temporal.Instant.from(event.start).toZonedDateTimeISO(timezone).toPlainDate().toString()
+    const date = toPlainDateString(event.start, timezone)
     const resourceIds = toArray(event.resourceId)
 
     for (var j = 0; j < resourceIds.length; j++) {

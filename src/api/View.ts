@@ -2,23 +2,26 @@
 import { toValue } from 'vue'
 import { Temporal } from 'temporal-polyfill'
 // Types
-import type { BuildViewOptions, BuildViewResult, Period } from '../types'
+import type { BuildViewOptions, BuildViewResult, Duration } from '../types'
 // API
 import DEFAULTS from './Defaults'
 
 export default function build(options: BuildViewOptions = {}): BuildViewResult {
   const period = toValue(options.period) || DEFAULTS.period
   const span = Math.max(toValue(options.span) || DEFAULTS.span, 1)
-  const firstDayOfWeek = toValue(options.firstDayOfWeek) ?? DEFAULTS.firstDayOfWeek
+  const unit = toValue(options.unit) || DEFAULTS.unit
+  const firstDayOfWeek = toValue(options.firstDayOfWeek)
   const timezone = toValue(options.timezone) || DEFAULTS.timezone
 
   const date = Temporal.PlainDate.from(toValue(options.date) || Temporal.Now.plainDateISO())
-  const dates = buildDatesForPeriod(period, date, span, firstDayOfWeek)
+  const start = startOfPeriod(date, period, period === 'weeks' || unit === 'weeks' ? firstDayOfWeek : undefined)
+  const dates = buildDates(start, period, span, unit)
 
   return {
     start: dates.at(0)!,
     end: dates.at(-1)!,
     timezone,
+    unit,
     period,
     span,
     firstDayOfWeek,
@@ -26,37 +29,26 @@ export default function build(options: BuildViewOptions = {}): BuildViewResult {
   }
 }
 
-function buildDatesForPeriod(period: Period, date: Temporal.PlainDate, span: number, firstDayOfWeek: number): string[] {
-  if (period === 'months')
-    return buildMonths(date, span)
-
-  if (period === 'weeks')
-    return buildWeeks(date, span, firstDayOfWeek)
-
-  return buildDays(date, span)
-}
-
-function buildDays(date: Temporal.PlainDate, days: number): string[] {
+function buildDates(date: Temporal.PlainDate, period: Duration, span: number, unit: Duration): string[] {
+  const end = date.add({ [period]: span })
+  const duration = date.until(end, { largestUnit: unit })
   const result: string[] = []
 
-  for (let i = 0; i < days; i++) {
-    result.push(date.add({ days: i }).toString())
+  for (let i = 0; i < duration[unit]; i++) {
+    result.push(date.add({ [unit]: i }).toString())
   }
 
   return result
 }
 
-function buildWeeks(date: Temporal.PlainDate, weeks: number, firstDayOfWeek: number): string[] {
-  const daysFromWeekStart = (date.dayOfWeek - firstDayOfWeek + 7) % 7
-  const start = date.subtract({ days: daysFromWeekStart })
+function startOfPeriod(date: Temporal.PlainDate, period: Duration, firstDayOfWeek?: number): Temporal.PlainDate {
+  let result = date
 
-  return buildDays(start, weeks * 7)
-}
+  if (period === 'years')
+    result = date.with({ day: 1, month: 1 })
 
-function buildMonths(date: Temporal.PlainDate, months: number): string[] {
-  const start = date.with({ day: 1 })
-  const startPlusMonths = start.add({ months: months - 1 })
-  const end = startPlusMonths.with({ day: startPlusMonths.daysInMonth })
+  if (period === 'months')
+    result = date.with({ day: 1 })
 
-  return buildDays(start, start.until(end, { largestUnit: 'day' }).days + 1)
+  return firstDayOfWeek === undefined ? result : result.subtract({ days: (result.dayOfWeek - firstDayOfWeek + 7) % 7 })
 }

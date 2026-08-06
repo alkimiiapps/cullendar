@@ -21,6 +21,8 @@ import type { Event, InternalResource, BuildApiResult, ToPayloadOptions, DragDro
 import Constants from '../api/Constants'
 // Utils
 import toArray from '../utils/ToArray'
+import isPlainDate from '../utils/date/IsPlainDate'
+import toPlainDateString from '../utils/date/ToPlainDateString'
 
 interface Props {
   date: string,
@@ -59,18 +61,27 @@ function onDrop(e: DragEvent): void {
   if (!data.id)
     return callbacks.value.onAddEvent(toPayload({ data }))
 
-  const originDate = Temporal.Instant.from(data.start).toZonedDateTimeISO(view.value.timezone).toPlainDate().toString()
+  const originDate = toPlainDateString(data.start, view.value.timezone)
 
   if ((originDate === props.date) && toArray(data.resourceId).includes(props.resource.id))
     return
 
-  const times = toNewTimes(data)
+  const times = isPlainDate(data.start) ? toNewDates(data) : toNewTimes(data)
   const payload = toPayload({ event: data, times })
 
   if (!callbacks.value.onBeforeDropEvent(payload))
     return
 
   callbacks.value.onMoveEvent(payload)
+}
+function toNewDates(event: Event): DragDropNewTimesResult {
+  const day = Temporal.PlainDate.from(props.date)
+  const duration = Temporal.PlainDate.from(event.start).until(Temporal.PlainDate.from(event.end))
+
+  return {
+    start: day.toString(),
+    end: day.add(duration).toString()
+  }
 }
 function toNewTimes(event: Event): DragDropNewTimesResult {
   const day = Temporal.PlainDate.from(props.date)

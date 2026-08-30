@@ -12,8 +12,8 @@
     <Timeline
       :rows="rows"
       :columns="view.dates">
-      <template #head="{ date }">
-        <slot name="dayHead" v-bind="{ date }"/>
+      <template #head="scope">
+        <slot name="dayHead" v-bind="scope"/>
       </template>
       <template #default="{ resource, date }">
         <Day
@@ -29,6 +29,9 @@
               v-bind="{ resource, event, date }"/>
           </slot>
         </Day>
+      </template>
+      <template #row="scope">
+        <slot name="row" v-bind="scope"/>
       </template>
     </Timeline>
     <slot/>

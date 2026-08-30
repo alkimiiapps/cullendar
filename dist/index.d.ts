@@ -6,7 +6,13 @@ import { default as create } from './api';
 import { DefineComponent } from 'vue';
 import { PublicProps } from 'vue';
 import { Ref } from 'vue';
+import { ScrollToOptions as ScrollToOptions_2 } from '@tanstack/vue-virtual';
+import { ShallowRef } from 'vue';
 import { UnwrapRef } from 'vue';
+import { VirtualItem } from '@tanstack/virtual-core';
+import { VirtualItem as VirtualItem_2 } from '@tanstack/vue-virtual';
+import { Virtualizer as Virtualizer_2 } from '@tanstack/vue-virtual';
+import { Virtualizer as Virtualizer_3 } from '@tanstack/virtual-core';
 
 declare const __VLS_component: DefineComponent<__VLS_Props, {}, {}, {}, {}, ComponentOptionsMixin, ComponentOptionsMixin, {}, string, PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, ComponentProvideOptions, false, {}, HTMLDivElement>;
 
@@ -16,7 +22,9 @@ declare const __VLS_component_3: DefineComponent<Props, {}, {}, {}, {}, Componen
 droppable: boolean;
 }, {}, {}, {}, string, ComponentProvideOptions, false, {}, HTMLDivElement>;
 
-declare const __VLS_component_4: DefineComponent<__VLS_Props_3, {}, {}, {}, {}, ComponentOptionsMixin, ComponentOptionsMixin, {}, string, PublicProps, Readonly<__VLS_Props_3> & Readonly<{}>, {}, {}, {}, {}, string, ComponentProvideOptions, false, {}, HTMLDivElement>;
+declare const __VLS_component_4: DefineComponent<__VLS_Props_3, {}, {}, {}, {}, ComponentOptionsMixin, ComponentOptionsMixin, {}, string, PublicProps, Readonly<__VLS_Props_3> & Readonly<{}>, {}, {}, {}, {}, string, ComponentProvideOptions, false, {}, any>;
+
+declare const __VLS_component_5: DefineComponent<__VLS_Props_4, {}, {}, {}, {}, ComponentOptionsMixin, ComponentOptionsMixin, {}, string, PublicProps, Readonly<__VLS_Props_4> & Readonly<{}>, {}, {}, {}, {}, string, ComponentProvideOptions, false, {}, HTMLDivElement>;
 
 declare type __VLS_Props = {
     cullendar: BuildApiResult;
@@ -29,6 +37,13 @@ declare type __VLS_Props_2 = {
 };
 
 declare type __VLS_Props_3 = {
+    row: VirtualItem_2;
+    resource: Resource;
+    virtualizer: Virtualizer;
+    size: number;
+};
+
+declare type __VLS_Props_4 = {
     event: Event_2;
     resource: InternalResource;
     date: string;
@@ -56,6 +71,12 @@ declare function __VLS_template(): {
             event: Event_2;
             date: string;
             key: string;
+        }): any;
+        row?(_: {
+            resource: InternalResource | InternalResourceGroup;
+            row: VirtualItem;
+            virtualizer: Virtualizer_3<HTMLElement, Element>;
+            size: number;
         }): any;
         default?(_: {}): any;
     };
@@ -91,6 +112,20 @@ declare function __VLS_template_4(): {
     attrs: Partial<{}>;
     slots: {
         default?(_: {
+            row: VirtualItem_2;
+            resource: Resource;
+            virtualizer: Virtualizer;
+            events: EventRow[];
+        }): any;
+    };
+    refs: {};
+    rootEl: any;
+};
+
+declare function __VLS_template_5(): {
+    attrs: Partial<{}>;
+    slots: {
+        default?(_: {
             isResizing: boolean;
         }): any;
     };
@@ -105,6 +140,8 @@ declare type __VLS_TemplateResult_2 = ReturnType<typeof __VLS_template_2>;
 declare type __VLS_TemplateResult_3 = ReturnType<typeof __VLS_template_3>;
 
 declare type __VLS_TemplateResult_4 = ReturnType<typeof __VLS_template_4>;
+
+declare type __VLS_TemplateResult_5 = ReturnType<typeof __VLS_template_5>;
 
 declare type __VLS_WithTemplateSlots<T, S> = T & {
     new (): {
@@ -130,6 +167,12 @@ declare type __VLS_WithTemplateSlots_4<T, S> = T & {
     };
 };
 
+declare type __VLS_WithTemplateSlots_5<T, S> = T & {
+    new (): {
+        $slots: S;
+    };
+};
+
 declare interface BuildApiResult extends UnwrapRef<{
     id: Ref<string>;
     elements: Ref<BuildElementsResult>;
@@ -141,11 +184,13 @@ declare interface BuildApiResult extends UnwrapRef<{
     utils: BuildUtilsResult;
     resizeDatesSet: Ref<Set<string>>;
     resizeResourcesSet: Ref<Set<string>>;
-    dayWidth: Ref<number>;
+    unitWidth: Ref<number>;
+    virtualizer: ShallowRef<Virtualizer | undefined>;
 }> {
 }
 
 declare interface BuildCallbacksResult {
+    onReady: (api: BuildApiResult) => void;
     onView: (view: BuildViewResult) => void;
     onAddEvent: (payload: DragDropCallbackPayload) => void;
     onMoveEvent: (payload: DragDropCallbackPayload) => void;
@@ -176,8 +221,9 @@ declare interface BuildLayoutResult {
 declare type BuildResourcesResult = Map<string, InternalResourceGroup | InternalResource>;
 
 declare interface BuildUtilsResult {
-    getEvents: (resourceId: string, date: string) => Set<Event_2>;
+    getEvents: (resourceId: string, date?: string) => Set<Event_2>;
     getResource: (id: string) => Resource | undefined;
+    scrollToDate: (date: string, options?: ScrollToOptions_2) => void;
 }
 
 declare interface BuildViewResult {
@@ -227,6 +273,13 @@ declare interface Event_2 extends Record<string, any> {
     resourceId: string | string[];
 }
 
+declare interface EventRow {
+    event: Event_2;
+    start: number;
+    end: number;
+    size: number;
+}
+
 declare interface InternalResource {
     id: string;
     nOrder?: number;
@@ -264,7 +317,7 @@ declare interface Props {
     resizeoverClass?: string;
 }
 
-export declare const ResizeHandle: __VLS_WithTemplateSlots_4<typeof __VLS_component_4, __VLS_TemplateResult_4["slots"]>;
+export declare const ResizeHandle: __VLS_WithTemplateSlots_5<typeof __VLS_component_5, __VLS_TemplateResult_5["slots"]>;
 
 declare interface Resource extends Record<string, any> {
     id: string;
@@ -273,10 +326,14 @@ declare interface Resource extends Record<string, any> {
     resources?: Resource[];
 }
 
+export declare const Row: __VLS_WithTemplateSlots_4<typeof __VLS_component_4, __VLS_TemplateResult_4["slots"]>;
+
 declare interface ToPayloadOptions {
     data?: object;
     event?: Event_2;
     times?: DragDropNewTimesResult;
 }
+
+declare type Virtualizer = Virtualizer_2<HTMLElement, Element>;
 
 export { }

@@ -1,4 +1,7 @@
-import type { ComputedRef, Ref, UnwrapRef, MaybeRef, MaybeRefOrGetter } from 'vue'
+import type { ComputedRef, Ref, ShallowRef, UnwrapRef, MaybeRef, MaybeRefOrGetter } from 'vue'
+import type { Virtualizer as TanstackVirtualizer, ScrollToOptions } from '@tanstack/vue-virtual'
+
+export type Virtualizer = TanstackVirtualizer<HTMLElement, Element>
 
 export type Duration = 'days' | 'weeks' | 'months' | 'years'
 
@@ -67,7 +70,8 @@ export interface BuildApiResult extends UnwrapRef<{
   utils: BuildUtilsResult,
   resizeDatesSet: Ref<Set<string>>,
   resizeResourcesSet: Ref<Set<string>>,
-  dayWidth: Ref<number>
+  unitWidth: Ref<number>,
+  virtualizer: ShallowRef<Virtualizer | undefined>
 }> {}
 
 export interface BuildViewOptions {
@@ -96,15 +100,8 @@ export interface BuildElementsResult {
   resources: HTMLElement
 }
 
-export interface BuildLayoutOptions {
-  daySize?: MaybeRefOrGetter<number>,
-  dayHeadSize?: MaybeRefOrGetter<number>,
-  eventSize?: MaybeRefOrGetter<number>,
-  resourceGroupSize?: MaybeRefOrGetter<number>,
-  resourcesClass?: MaybeRefOrGetter<string>,
-  timelineClass?: MaybeRefOrGetter<string>,
-  gap?: MaybeRefOrGetter<number>,
-  overscan?: MaybeRefOrGetter<number>
+export type BuildLayoutOptions = {
+  [K in keyof BuildLayoutResult]?: MaybeRefOrGetter<BuildLayoutResult[K]>
 }
 
 export interface BuildLayoutResult {
@@ -118,27 +115,24 @@ export interface BuildLayoutResult {
   overscan: number
 }
 
-export interface BuildCallbacksOptions {
-  onView?: MaybeRef<(view: BuildViewResult) => void>,
-  onAddEvent?: MaybeRef<(payload: DragDropCallbackPayload) => void>,
-  onMoveEvent?: MaybeRef<(payload: DragDropCallbackPayload) => void>,
-  onResizeEvent?: MaybeRef<(payload: OnResizeEventCallbackPayload) => void>,
-  onBeforeDropEvent?: MaybeRef<(payload: DragDropCallbackPayload) => boolean>,
-  onDayEnter?: MaybeRef<(payload: DragDropCallbackPayload) => void>
+export type BuildCallbacksOptions = {
+  [K in keyof BuildCallbacksResult]?: MaybeRef<BuildCallbacksResult[K]>
 }
 
 export interface BuildCallbacksResult {
-  onView: (view: BuildViewResult) => void;
-  onAddEvent: (payload: DragDropCallbackPayload) => void;
-  onMoveEvent: (payload: DragDropCallbackPayload) => void;
-  onResizeEvent: (payload: OnResizeEventCallbackPayload) => void;
-  onBeforeDropEvent: (payload: DragDropCallbackPayload) => boolean;
+  onReady: (api: BuildApiResult) => void,
+  onView: (view: BuildViewResult) => void,
+  onAddEvent: (payload: DragDropCallbackPayload) => void,
+  onMoveEvent: (payload: DragDropCallbackPayload) => void,
+  onResizeEvent: (payload: OnResizeEventCallbackPayload) => void,
+  onBeforeDropEvent: (payload: DragDropCallbackPayload) => boolean,
   onDayEnter: (payload: DragDropCallbackPayload) => void
 }
 
 export interface BuildUtilsResult {
-  getEvents: (resourceId: string, date: string) => Set<Event>,
-  getResource: (id: string) => Resource | undefined
+  getEvents: (resourceId: string, date?: string) => Set<Event>,
+  getResource: (id: string) => Resource | undefined,
+  scrollToDate: (date: string, options?: ScrollToOptions) => void
 }
 
 export type DateEventsMap = Map<string, Set<Event>>
@@ -177,4 +171,11 @@ export interface OnResizeEventCallbackPayload {
   date: string,
   dates: string[],
   view: BuildViewResult
+}
+
+export interface EventRow {
+  event: Event,
+  start: number,
+  end: number,
+  size: number
 }

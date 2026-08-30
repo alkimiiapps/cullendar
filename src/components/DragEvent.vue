@@ -71,6 +71,7 @@ function setGhost(el: HTMLElement, position: DOMRect): HTMLElement {
   .cullendar-drag-event {
     position: relative;
     user-select: none;
+    pointer-events: all;
   }
   .cullendar-ghost-event {
     position: fixed;

@@ -1,15 +1,16 @@
 // Libraries
 import { unref } from 'vue'
 // Types
-import type { BuildCallbacksOptions, BuildCallbacksResult, BuildViewResult, DragDropCallbackPayload, OnResizeEventCallbackPayload } from '../types'
+import type { BuildCallbacksOptions, BuildCallbacksResult } from '../types'
 
 export default function build(options: BuildCallbacksOptions = {}): BuildCallbacksResult {
   return {
-    onView: unref(options.onView) || ((_: BuildViewResult) => {}),
-    onAddEvent: unref(options.onAddEvent) || ((_: DragDropCallbackPayload) => {}),
-    onMoveEvent: unref(options.onMoveEvent) || ((_: DragDropCallbackPayload) => {}),
-    onResizeEvent: unref(options.onResizeEvent) || ((_: OnResizeEventCallbackPayload) => {}),
-    onBeforeDropEvent: unref(options.onBeforeDropEvent) || ((_: DragDropCallbackPayload) => true),
-    onDayEnter: unref(options.onDayEnter) || ((_: DragDropCallbackPayload) => {})
+    onReady: unref(options.onReady) ?? (() => {}),
+    onView: unref(options.onView) ?? (() => {}),
+    onAddEvent: unref(options.onAddEvent) ?? (() => {}),
+    onMoveEvent: unref(options.onMoveEvent) ?? (() => {}),
+    onResizeEvent: unref(options.onResizeEvent) ?? (() => {}),
+    onBeforeDropEvent: unref(options.onBeforeDropEvent) ?? (() => true),
+    onDayEnter: unref(options.onDayEnter) ?? (() => {})
   }
 }

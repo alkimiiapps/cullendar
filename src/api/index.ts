@@ -1,7 +1,7 @@
 // Libraries
-import { ref, computed, reactive, toValue, watch } from 'vue'
+import { ref, shallowRef, computed, reactive, toValue, watch } from 'vue'
 // Types
-import type { BuildApiOptions, BuildApiResult } from '../types'
+import type { Virtualizer, BuildApiOptions, BuildApiResult } from '../types'
 // Utils
 import randomString from '../utils/string/Random'
 // API
@@ -17,7 +17,9 @@ export default function create(options: BuildApiOptions = {}): BuildApiResult {
   const elements = ref()
   const resizeDatesSet = ref(new Set<string>())
   const resizeResourcesSet = ref(new Set<string>())
-  const dayWidth = ref(0)
+
+  const unitWidth = ref(0)
+  const virtualizer = shallowRef<Virtualizer>()
 
   const view = computed(() => buildView(toValue(options.view)))
   const layout = computed(() => buildLayout(toValue(options.layout)))
@@ -26,7 +28,7 @@ export default function create(options: BuildApiOptions = {}): BuildApiResult {
   const resources = computed(() => buildResources(toValue(options.resources), events.value))
 
   const callbacks = computed(() => buildCallbacks(toValue(options.callbacks)))
-  const utils = buildUtils(events, resources)
+  const utils = buildUtils(view, events, resources, virtualizer)
 
   watch(view, () => callbacks.value.onView(view.value))
 
@@ -41,7 +43,8 @@ export default function create(options: BuildApiOptions = {}): BuildApiResult {
     utils,
     resizeDatesSet,
     resizeResourcesSet,
-    dayWidth
+    unitWidth,
+    virtualizer
   })
 
   return api

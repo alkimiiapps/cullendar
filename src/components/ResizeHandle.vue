@@ -25,7 +25,7 @@ const props = defineProps<{
 }>()
 
 const api = inject('api') as BuildApiResult
-const { dayWidth, elements, view, resources, layout, callbacks, utils, resizeDatesSet, resizeResourcesSet } = toRefs(api)
+const { unitWidth, elements, view, resources, layout, callbacks, utils, resizeDatesSet, resizeResourcesSet } = toRefs(api)
 
 let prevDeltaDays = 0
 let prevDeltaBoundary = 0
@@ -102,7 +102,7 @@ function setDeltaResources(deltaY: number): void {
   }
 }
 function setDeltaDays(deltaX: number): void {
-  const delta = Math.ceil(deltaX / (dayWidth.value + layout.value.gap))
+  const delta = Math.ceil(deltaX / (unitWidth.value + layout.value.gap))
 
   if (prevDeltaDays === delta)
     return

@@ -6,6 +6,7 @@ import type { App } from 'vue'
 import Cullendar from './index.vue'
 import DragEvent from './components/DragEvent.vue'
 import DropDay from './components/DropDay.vue'
+import Row from './components/Row.vue'
 import ResizeHandle from './components/ResizeHandle.vue'
 
 export default { install: (app: App) => app.component('Cullendar', Cullendar) }
@@ -14,6 +15,7 @@ export {
   Cullendar,
   DragEvent,
   DropDay,
+  Row,
   ResizeHandle,
   create
 }

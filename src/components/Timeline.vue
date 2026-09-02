@@ -4,7 +4,7 @@
     :layout="layout"
     :wrapper-style="wrapperStyle"
     :class="['cullendar-timeline', layout.timelineClass]">
-    <template #wrapper>
+    <template v-if="isReady" #wrapper>
       <div class="cullendar-timeline-head">
         <div
           v-for="col in virtualColumns"
@@ -15,7 +15,7 @@
         </div>
       </div>
     </template>
-    <template #default="{ row, data }">
+    <template v-if="isReady" #default="{ row, data }">
       <div
         v-for="col in virtualColumns"
         :key="col.index"
@@ -24,15 +24,18 @@
         <slot v-bind="{ resource: data, date: columns[col.index] }"/>
       </div>
     </template>
+    <template v-if="isReady" #row="{ row, data }">
+      <slot name="row" v-bind="{ resource: data, row, virtualizer, size: totalSizeColumns }"/>
+    </template>
   </RowVirtualiser>
 </template>
 
 <script lang="ts" setup>
 // Libraries
-import { computed, toRefs, watch, onMounted, onUnmounted, inject, type CSSProperties } from 'vue'
+import { ref, computed, toRefs, onMounted, inject, watch, type CSSProperties } from 'vue'
 import { useVirtualizer, type VirtualItem } from '@tanstack/vue-virtual'
 // Types
-import type { InternalResource, InternalResourceGroup, BuildApiResult } from '../types'
+import type { Virtualizer, InternalResource, InternalResourceGroup, BuildApiResult } from '../types'
 // Utils
 import toPx from '../utils/format/ToPx'
 // API
@@ -46,57 +49,60 @@ const props = defineProps<{
 }>()
 
 const api = inject('api') as BuildApiResult
-const { id, dayWidth, elements, layout } = toRefs(api)
+const { id, unitWidth, elements, layout, callbacks, virtualizer: apiVirtualizer } = toRefs(api)
 
-let observer: ResizeObserver
+const isReady = ref(false)
 
 const options = computed(() => ({
   horizontal: true,
   count: props.columns.length,
   getScrollElement: () => elements.value?.timeline,
-  estimateSize: () => dayWidth.value,
+  estimateSize: () => unitWidth.value,
   gap: layout.value.gap,
-  overscan: layout.value.overscan
+  overscan: layout.value.overscan,
+  onChange: (instance: Virtualizer) => {
+    setUnitWidth(instance.scrollElement?.clientWidth ?? 0)
+
+    if (isReady.value)
+      return
+
+    isReady.value = true
+    callbacks.value.onReady(api)
+  }
 }))
 
 const virtualizer = useVirtualizer(options)
+apiVirtualizer.value = virtualizer.value
 
 const virtualColumns = computed(() => virtualizer.value.getVirtualItems())
 const totalSizeColumns = computed(() => virtualizer.value.getTotalSize())
 const wrapperStyle = computed(() => ({ width: toPx(totalSizeColumns.value) }))
 
-watch([() => props.columns, () => layout.value.daySize], () => updateDaySize())
+onMounted(() => elements.value = buildElements(id.value))
 
-onMounted(() => {
-  elements.value = buildElements(id.value)
+watch([() => props.columns.length, layout], () => virtualizer.value.measure())
 
-  observer = new ResizeObserver(([entry]) => entry && updateDaySize(entry.contentRect.width))
-  observer.observe(elements.value.timeline)
-})
-onUnmounted(() => observer.unobserve(elements.value.timeline))
+function setUnitWidth(timelineWidth: number): void {
+  const count = props.columns.length
+  const available = timelineWidth - (layout.value.gap * (count - 1))
+  const newValue = Math.max(layout.value.daySize, Math.floor(available / count))
 
-function updateDaySize(rectWidth?: number): void {
-  const clientWidth = rectWidth ?? elements.value.timeline.clientWidth
-  const totalGap = layout.value.gap * (props.columns.length - 1)
-  const totalWidth = clientWidth - totalGap
-  const newDaySize = Math.max(layout.value.daySize, Math.floor(totalWidth / props.columns.length))
-
-  if (newDaySize === dayWidth.value)
+  if (newValue === unitWidth.value)
     return
 
-  dayWidth.value = newDaySize
+  unitWidth.value = newValue
   virtualizer.value.measure()
 }
 function toHeadStyle(col: VirtualItem): CSSProperties {
   return {
     height: toPx(layout.value.dayHeadSize),
-    width: toPx(dayWidth.value),
+    width: toPx(unitWidth.value),
     transform: `translateX(${toPx(col.start)}) translateY(0)`
   }
 }
 function toColStyle(row: VirtualItem, col: VirtualItem): CSSProperties {
   return {
-    width: toPx(dayWidth.value),
+    width: toPx(unitWidth.value),
     height: toPx(row.size),
     transform: `translateX(${toPx(col.start)}) translateY(${toPx(row.start)})`
   }

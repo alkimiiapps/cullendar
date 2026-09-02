@@ -30,11 +30,13 @@ export default function build(options: BuildViewOptions = {}): BuildViewResult {
 }
 
 function buildDates(date: Temporal.PlainDate, period: Duration, span: number, unit: Duration): string[] {
-  const end = date.add({ [period]: span })
-  const duration = date.until(end, { largestUnit: unit })
   const result: string[] = []
 
-  for (let i = 0; i < duration[unit]; i++) {
+  const end = date.add({ [period]: span })
+  const duration = date.until(end)
+  const units = duration.total({ unit, relativeTo: date })
+
+  for (let i = 0; i < units; i++) {
     result.push(date.add({ [unit]: i }).toString())
   }
 

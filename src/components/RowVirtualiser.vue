@@ -1,5 +1,5 @@
 <template>
-  <div ref="el">
+  <div ref="el" class="cullendar-row-virtualiser">
     <div class="cullendar-row-virtualiser-wrapper" :style="wrapperStyle">
       <slot name="wrapper"/>
       <slot
@@ -7,13 +7,20 @@
         :key="row.index"
         v-bind="{ row, data: rows[row.index] }"/>
     </div>
+    <div class="cullendar-rows-wrapper" :style="wrapperStyle">
+      <slot
+        v-for="row in virtualRows"
+        :key="row.index"
+        v-bind="{ row, data: rows[row.index] }"
+        name="row"/>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 // Libraries
-import { ref, computed, watch, type Ref, type CSSProperties } from 'vue'
-import { useVirtualizer, type Virtualizer } from '@tanstack/vue-virtual'
+import { ref, computed, watch, type CSSProperties } from 'vue'
+import { useVirtualizer } from '@tanstack/vue-virtual'
 // Types
 import type { InternalResource, InternalResourceGroup, BuildLayoutResult } from '../types'
 // Utils
@@ -36,7 +43,7 @@ const options = computed(() => ({
   overscan: props.layout.overscan
 }))
 
-const virtualizer: Ref<Virtualizer<HTMLElement, Element>> = useVirtualizer(options)
+const virtualizer = useVirtualizer(options)
 
 const virtualRows = computed(() => virtualizer.value.getVirtualItems())
 const totalSize = computed(() => virtualizer.value.getTotalSize())
@@ -58,7 +65,13 @@ function estimateSize(index: number): number {
 </script>
 
 <style scoped>
-  .cullendar-row-virtualiser-wrapper {
+  .cullendar-row-virtualiser, .cullendar-row-virtualiser-wrapper {
     position: relative;
+  }
+  .cullendar-rows-wrapper {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
   }
 </style>

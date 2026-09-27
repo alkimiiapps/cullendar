@@ -2,6 +2,7 @@
   <div
     draggable="true"
     class="cullendar-drag-event"
+    style="position:relative;user-select:none;pointer-events:all;"
     @dragstart.stop="onDragstart"
     @dragend.stop="onDragend">
     <slot/>
@@ -10,19 +11,22 @@
 
 <script lang="ts" setup>
 // Libraries
-import { computed } from 'vue'
-// Config
-import constants from '../api/Constants'
+import { toRefs, computed } from 'vue'
+// Types
+import type { BuildApiResult } from '../types'
 // Utils
 import toPx from '../utils/format/ToPx'
 
 const props = defineProps<{
+  cullendar: BuildApiResult,
   data: object | Event,
   dragClass?: string,
   ghostClass?: string
 }>()
 
 let ghost: HTMLElement | null
+
+const { internal } = toRefs(props.cullendar)
 
 const dragClasses = computed(() => props.dragClass?.split?.(' ') || [])
 const ghostClasses = computed(() => props.ghostClass?.split?.(' ') || [])
@@ -31,7 +35,6 @@ function onDragstart(e: DragEvent): void {
   if (!e.dataTransfer)
     return
 
-  const el = document.querySelector('.cullendar') as HTMLElement
   const target = e.target as HTMLElement
   const targetRect = target.getBoundingClientRect()
 
@@ -40,16 +43,15 @@ function onDragstart(e: DragEvent): void {
 
   e.dataTransfer.setDragImage(ghost, e.clientX - targetRect.left, e.clientY - targetRect.top)
   e.dataTransfer.effectAllowed = 'id' in props.data ? 'move' : 'copy'
-  e.dataTransfer.setData(constants.DATA_TRANSFER_TYPE, JSON.stringify(props.data))
+  e.dataTransfer.setData(internal.value.dataTransferType, JSON.stringify(props.data))
 
-  requestAnimationFrame(() => el.classList.add(constants.DRAGGING_CLASS))
+  requestAnimationFrame(() => internal.value.isDragging = true)
 }
 function onDragend(e: DragEvent): void {
-  const el = document.querySelector('.cullendar') as HTMLElement
   const target = e.target as HTMLElement
 
   target.classList.remove(...dragClasses.value)
-  el.classList.remove(constants.DRAGGING_CLASS)
+  internal.value.isDragging = false
 
   if (ghost)
     ghost.remove()
@@ -60,21 +62,11 @@ function setGhost(el: HTMLElement, position: DOMRect): HTMLElement {
   clone.classList.add('cullendar-ghost-event', ...ghostClasses.value)
   clone.style.height = toPx(position.height)
   clone.style.width = toPx(position.width)
+  clone.style.position = 'fixed'
+  clone.style.left = '-9999px'
 
   document.body.appendChild(clone)
 
   return clone
 }
 </script>
-
-<style scoped>
-  .cullendar-drag-event {
-    position: relative;
-    user-select: none;
-    pointer-events: all;
-  }
-  .cullendar-ghost-event {
-    position: fixed;
-    left: -9999px;
-  }
-</style>

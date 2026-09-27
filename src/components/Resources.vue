@@ -3,6 +3,7 @@
     v-slot="{ row, data }"
     :rows="rows"
     :layout="layout"
+    :style="['overflow:scroll auto;scrollbar-width:none;', style]"
     :class="['cullendar-resources', layout.resourcesClass]">
     <div class="cullendar-resources-virtual-row" :style="toStyle(row)">
       <slot v-bind="{ resource: data }"/>
@@ -26,24 +27,23 @@ defineProps<{ rows: (InternalResource | InternalResourceGroup)[] }>()
 const api = inject('api') as BuildApiResult
 const { layout } = toRefs(api)
 
+const style = { marginBottom: getScrollbarWidth() }
+
 function toStyle(row: VirtualItem): CSSProperties {
   return {
     height: toPx(row.size),
-    transform: `translateY(${toPx(row.start)})`
+    width: '100%',
+    transform: `translateY(${toPx(row.start)})`,
+    position: 'absolute'
   }
 }
-</script>
+function getScrollbarWidth(): string {
+  const div = Object.assign(document.createElement('div'), { style:'overflow:scroll;visibility:hidden;' })
+  const el = document.body.appendChild(div)
+  const width = el.offsetWidth - el.clientWidth
 
-<style scoped>
-  .cullendar-resources {
-    margin-bottom: var(--scrollbar-width);
-    overflow: scroll auto;
-    scrollbar-width: none;
-  }
-  .cullendar-resources-virtual-row {
-    width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-</style>
+  el.remove()
+
+  return toPx(width)
+}
+</script>

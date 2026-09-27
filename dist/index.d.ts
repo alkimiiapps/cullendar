@@ -31,6 +31,7 @@ declare type __VLS_Props = {
 };
 
 declare type __VLS_Props_2 = {
+    cullendar: BuildApiResult;
     data: object | Event;
     dragClass?: string;
     ghostClass?: string;
@@ -115,7 +116,7 @@ declare function __VLS_template_4(): {
             row: VirtualItem_2;
             resource: Resource;
             virtualizer: Virtualizer;
-            events: EventRow[];
+            eventRows: EventRow[];
         }): any;
     };
     refs: {};
@@ -174,7 +175,6 @@ declare type __VLS_WithTemplateSlots_5<T, S> = T & {
 };
 
 declare interface BuildApiResult extends UnwrapRef<{
-    id: Ref<string>;
     elements: Ref<BuildElementsResult>;
     view: ComputedRef<BuildViewResult>;
     layout: ComputedRef<BuildLayoutResult>;
@@ -182,10 +182,7 @@ declare interface BuildApiResult extends UnwrapRef<{
     resources: ComputedRef<BuildResourcesResult>;
     callbacks: ComputedRef<BuildCallbacksResult>;
     utils: BuildUtilsResult;
-    resizeDatesSet: Ref<Set<string>>;
-    resizeResourcesSet: Ref<Set<string>>;
-    unitWidth: Ref<number>;
-    virtualizer: ShallowRef<Virtualizer | undefined>;
+    internal: BuildInternalResult;
 }> {
 }
 
@@ -207,6 +204,19 @@ declare interface BuildElementsResult {
 
 declare type BuildEventsResult = Map<string, DateEventsMap>;
 
+declare interface BuildInternalResult {
+    id: string;
+    dataTransferType: string;
+    virtualizer: ShallowRef<Virtualizer | undefined>;
+    scale: ComputedRef<number>;
+    durations: ComputedRef<Map<string, number>>;
+    isDragging: Ref<boolean>;
+    isResizing: Ref<boolean>;
+    resizeDates: Ref<Set<string>>;
+    resizeResources: Ref<Set<string>>;
+    fit: (value: number) => void;
+}
+
 declare interface BuildLayoutResult {
     daySize: number;
     dayHeadSize: number;
@@ -214,7 +224,6 @@ declare interface BuildLayoutResult {
     resourceGroupSize: number;
     resourcesClass?: string;
     timelineClass?: string;
-    gap: number;
     overscan: number;
 }
 

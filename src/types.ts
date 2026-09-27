@@ -47,7 +47,6 @@ export interface DefaultOptions {
   dayHeadSize: number,
   eventSize: number,
   resourceGroupSize: number,
-  gap: number,
   overscan: number
 }
 
@@ -60,7 +59,6 @@ export interface BuildApiOptions {
 }
 
 export interface BuildApiResult extends UnwrapRef<{
-  id: Ref<string>,
   elements: Ref<BuildElementsResult>,
   view: ComputedRef<BuildViewResult>,
   layout: ComputedRef<BuildLayoutResult>,
@@ -68,10 +66,7 @@ export interface BuildApiResult extends UnwrapRef<{
   resources: ComputedRef<BuildResourcesResult>,
   callbacks: ComputedRef<BuildCallbacksResult>,
   utils: BuildUtilsResult,
-  resizeDatesSet: Ref<Set<string>>,
-  resizeResourcesSet: Ref<Set<string>>,
-  unitWidth: Ref<number>,
-  virtualizer: ShallowRef<Virtualizer | undefined>
+  internal: BuildInternalResult
 }> {}
 
 export interface BuildViewOptions {
@@ -111,7 +106,6 @@ export interface BuildLayoutResult {
   resourceGroupSize: number,
   resourcesClass?: string,
   timelineClass?: string,
-  gap: number,
   overscan: number
 }
 
@@ -135,16 +129,28 @@ export interface BuildUtilsResult {
   scrollToDate: (date: string, options?: ScrollToOptions) => void
 }
 
+export interface BuildInternalResult {
+  id: string,
+  dataTransferType: string,
+  virtualizer: ShallowRef<Virtualizer | undefined>,
+  scale: ComputedRef<number>,
+  durations: ComputedRef<Map<string, number>>,
+  isDragging: Ref<boolean>,
+  isResizing: Ref<boolean>,
+  resizeDates: Ref<Set<string>>,
+  resizeResources: Ref<Set<string>>,
+  fit: (value: number) => void
+}
+
 export type DateEventsMap = Map<string, Set<Event>>
 
 export type BuildEventsResult = Map<string, DateEventsMap>
 
 export type BuildResourcesResult = Map<string, InternalResourceGroup | InternalResource>
 
-export interface ResizeResourceBoundary {
+export interface ResizeBoundary {
   id: string,
-  top: number,
-  bottom: number
+  edge: number
 }
 
 export interface DragDropNewTimesResult {

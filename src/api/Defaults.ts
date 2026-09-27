@@ -9,7 +9,6 @@ const DEFAULTS: DefaultOptions = {
   dayHeadSize: 32,
   eventSize: 48,
   resourceGroupSize: 24,
-  gap: 0,
   overscan: 0
 }
 

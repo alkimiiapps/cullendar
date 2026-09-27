@@ -13,7 +13,6 @@ export default function build(options: BuildLayoutOptions = {}): BuildLayoutResu
     resourceGroupSize: toValue(options.resourceGroupSize) ?? DEFAULTS.resourceGroupSize,
     resourcesClass: toValue(options.resourcesClass),
     timelineClass: toValue(options.timelineClass),
-    gap: toValue(options.gap) ?? DEFAULTS.gap,
     overscan: toValue(options.overscan) ?? DEFAULTS.overscan
   }
 }

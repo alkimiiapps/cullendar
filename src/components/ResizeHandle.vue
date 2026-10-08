@@ -1,7 +1,7 @@
 <template>
   <div
     draggable="true"
-    class="cullendar-resize-handle"
+    style="position:absolute;top:0;bottom:0;right:0;cursor:ew-resize;"
     @dragstart.stop.prevent
     @mousedown="onMousedown">
     <slot v-bind="{ isResizing }"/>
@@ -12,9 +12,7 @@
 // Libraries
 import { ref, toRefs, inject } from 'vue'
 // Types
-import type { Event, ResizeResourceBoundary, InternalResource, BuildApiResult } from '../types'
-// API
-import Constants from '../api/Constants'
+import type { Event, ResizeBoundary, InternalResource, BuildApiResult } from '../types'
 // Composables
 import useEdgeScroll from '../composables/EdgeScroll'
 
@@ -25,12 +23,10 @@ const props = defineProps<{
 }>()
 
 const api = inject('api') as BuildApiResult
-const { unitWidth, elements, view, resources, layout, callbacks, utils, resizeDatesSet, resizeResourcesSet } = toRefs(api)
+const { elements, view, resources, layout, callbacks, utils, internal } = toRefs(api)
 
-let prevDeltaDays = 0
-let prevDeltaBoundary = 0
-
-const resourceBoundaries: ResizeResourceBoundary[] = []
+const resourceBoundaries: ResizeBoundary[] = []
+const dateBoundaries: ResizeBoundary[] = []
 
 const isResizing = ref(false)
 const startX = ref(0)
@@ -42,40 +38,35 @@ function onMousedown(e: MouseEvent): void {
   startX.value = e.clientX
   startY.value = e.clientY
   isResizing.value = true
+  internal.value.isResizing = true
 
-  resizeDatesSet.value.add(props.date)
-  resizeResourcesSet.value.add(props.resource.id)
-
-  setResourceBoundaries()
+  setResourceResizeBoundaries()
+  setDateResizeBoundaries()
 
   document.addEventListener('mousemove', onMousemove)
   document.addEventListener('mouseup', onMouseup)
 
-  elements.value.calendar.classList.add(Constants.RESIZING_CLASS)
   startEdgeScroll()
 }
 function onMousemove(e: MouseEvent): void {
   const deltaX = Math.max(0, e.clientX - startX.value + scrolledX.value)
   const deltaY = Math.max(0, e.clientY - startY.value + scrolledY.value)
 
-  setDeltaResources(deltaY)
-  setDeltaDays(deltaX)
+  updateResizeSelection(resourceBoundaries, internal.value.resizeResources, deltaY, props.resource.id)
+  updateResizeSelection(dateBoundaries, internal.value.resizeDates, deltaX, props.date)
 }
 function onMouseup(): void {
-  const resources = Array.from(resizeResourcesSet.value.values()).slice(1).map(id => utils.value.getResource(id)!)
-  const dates = Array.from(resizeDatesSet.value.values()).slice(1)
+  const resources = Array.from(internal.value.resizeResources.values()).slice(1).map(id => utils.value.getResource(id)!)
+  const dates = Array.from(internal.value.resizeDates.values()).slice(1)
 
-  prevDeltaDays = 0
-  prevDeltaBoundary = 0
-
-  resizeResourcesSet.value.clear()
-  resizeDatesSet.value.clear()
   isResizing.value = false
+  internal.value.resizeResources.clear()
+  internal.value.resizeDates.clear()
+  internal.value.isResizing = false
 
   document.removeEventListener('mousemove', onMousemove)
   document.removeEventListener('mouseup', onMouseup)
 
-  elements.value.calendar.classList.remove(Constants.RESIZING_CLASS)
   stopEdgeScroll()
 
   if (!dates.length && !resources.length)
@@ -90,66 +81,50 @@ function onMouseup(): void {
     view: view.value
   })
 }
-function setDeltaResources(deltaY: number): void {
-  while (prevDeltaBoundary < resourceBoundaries.length && deltaY > resourceBoundaries[prevDeltaBoundary].bottom) {
-    resizeResourcesSet.value.add(resourceBoundaries[prevDeltaBoundary].id)
-    prevDeltaBoundary++
-  }
+function updateResizeSelection(boundaries: ResizeBoundary[], selectedIds: Set<string>, delta: number, initialId: string): void {
+  const crossedBoundaries = boundaries.filter(boundary => delta > boundary.edge)
 
-  while (prevDeltaBoundary > 0 && deltaY < resourceBoundaries[prevDeltaBoundary - 1].top) {
-    resizeResourcesSet.value.delete(resourceBoundaries[prevDeltaBoundary - 1].id)
-    prevDeltaBoundary--
+  selectedIds.clear()
+  selectedIds.add(initialId)
+
+  for (let i = 0; i < crossedBoundaries.length; i++) {
+    const boundary = crossedBoundaries[i]
+    selectedIds.add(boundary.id)
   }
 }
-function setDeltaDays(deltaX: number): void {
-  const delta = Math.ceil(deltaX / (unitWidth.value + layout.value.gap))
+function setDateResizeBoundaries(): void {
+  let edge = 20
+  const start = view.value.dates.indexOf(props.date) + 1
 
-  if (prevDeltaDays === delta)
-    return
+  dateBoundaries.length = 0
 
-  const dates = view.value.dates
-  const index = dates.indexOf(props.date)
+  for (let i = start; i < view.value.dates.length; i++) {
+    const date = view.value.dates[i]
+    const size = internal.value.durations.get(date)! * internal.value.scale
 
-  prevDeltaDays = delta
-  resizeDatesSet.value = new Set<string>(dates.slice(index, index + delta + 1))
+    dateBoundaries.push({ id: date, edge })
+    edge += size
+  }
 }
-function setResourceBoundaries(): ResizeResourceBoundary[] {
-  let y = layout.value.eventSize
-  let include = false
+function setResourceResizeBoundaries(): void {
+  let edge = 20
+  const arr = Array.from(resources.value.values())
+  const start = arr.findIndex(v => v.id === props.resource.id) + 1
 
   resourceBoundaries.length = 0
 
-  for (const [id, resource] of resources.value) {
-    if ('isGroup' in resource)
+  for (let i = start; i < arr.length; i++) {
+    const resource = arr[i]
+
+    if ('isGroup' in resource) {
+      edge += layout.value.resourceGroupSize
       continue
-
-    if (include) {
-      const size = resource.maxEvents * layout.value.eventSize
-      const boundary: ResizeResourceBoundary = {
-        id,
-        top: y,
-        bottom: y + size
-      }
-
-      y += size
-      resourceBoundaries.push(boundary)
     }
 
-    if (id === props.resource.id)
-      include = true
-  }
+    const size = resource.maxEvents * layout.value.eventSize
 
-  return resourceBoundaries
+    resourceBoundaries.push({ id: resource.id, edge })
+    edge += size
+  }
 }
 </script>
-
-<style scoped>
-  .cullendar-resize-handle {
-    width: 16px;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    cursor: ew-resize;
-  }
-</style>

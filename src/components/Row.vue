@@ -1,17 +1,16 @@
 <template>
-  <slot v-bind="{ row, resource, virtualizer, events }"/>
+  <slot v-bind="{ row, resource, virtualizer, eventRows }"/>
 </template>
 
 <script lang="ts" setup>
 // Libraries
 import { computed, inject } from 'vue'
 import { Temporal } from 'temporal-polyfill'
-// Utils
-import isPlainDate from '../utils/date/IsPlainDate'
-import getTimelineScale from '../utils/math/GetTimelineScale'
 // Types
 import type { Virtualizer, Event, Resource, BuildApiResult, EventRow } from '../types'
 import type { VirtualItem } from '@tanstack/vue-virtual'
+// Utils
+import isPlainDate from '../utils/date/IsPlainDate'
 
 const props = defineProps<{
   row: VirtualItem,
@@ -22,36 +21,44 @@ const props = defineProps<{
 
 const api = inject('api') as BuildApiResult
 
-const events = computed(() => build(api.utils.getEvents(props.resource.id), props.size))
+const eventRows = computed(() => build(api.utils.getEvents(props.resource.id), props.size))
 
 function build(values: Set<Event>, size: number): EventRow[] {
   const result: EventRow[] = []
 
-  const origin = Temporal.PlainDate.from(api.view.start)
-  const scale = getTimelineScale(api.view, size)
-  const arr = Array.from(values.values())
+  const plainDateOrigin = Temporal.PlainDate.from(api.view.start)
+  const zonedOrigin = plainDateOrigin.toZonedDateTime(api.view.timezone)
 
-  for (let i = 0; i < arr.length; i++) {
-    const event = arr[i]
+  const events = Array.from(values.values())
 
-    const start = isPlainDate(event.start) ? Temporal.PlainDate.from(event.start) : Temporal.Instant.from(event.start).toZonedDateTimeISO(api.view.timezone)
-    const end = isPlainDate(event.end) ? Temporal.PlainDate.from(event.end) : Temporal.Instant.from(event.end).toZonedDateTimeISO(api.view.timezone)
+  for (let i = 0; i < events.length; i++) {
+    const event = events[i]
+
+    const isDateOnly = isPlainDate(event.start) && isPlainDate(event.end)
+    const origin = isDateOnly ? plainDateOrigin : zonedOrigin
+
+    const start = isDateOnly ? Temporal.PlainDate.from(event.start) : Temporal.Instant.from(event.start).toZonedDateTimeISO(api.view.timezone)
+    const end = isDateOnly ? Temporal.PlainDate.from(event.end) : Temporal.Instant.from(event.end).toZonedDateTimeISO(api.view.timezone)
 
     const duration = start.until(end)
     const durationFromOrigin = origin.until(start)
 
-    const size = Math.floor(scale * duration.total({ unit: 'minutes', relativeTo: start }))
-    const startPos = Math.floor(scale * durationFromOrigin.total({ unit: 'minutes', relativeTo: origin }))
-    const endPos = size + startPos
+    const eventSize = Math.floor(api.internal.scale * duration.total({ unit: 'minutes', relativeTo: start }))
+    const startPos = Math.floor(api.internal.scale * durationFromOrigin.total({ unit: 'minutes', relativeTo: origin }))
+    const endPos = startPos + eventSize
 
-    if (endPos < 0 || startPos > props.virtualizer.getTotalSize())
+    if (endPos <= 0 || startPos >= size)
       continue
+
+    const clippedStart = Math.max(startPos, 0)
+    const clippedEnd = Math.min(endPos, size)
+    const clippedSize = clippedEnd - clippedStart
 
     result.push({
       event,
-      start: startPos,
-      end: endPos,
-      size: size
+      start: clippedStart,
+      end: clippedEnd,
+      size: clippedSize
     })
   }
 

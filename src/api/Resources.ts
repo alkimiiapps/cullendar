@@ -2,10 +2,10 @@
 import { reactive } from 'vue'
 // Types
 import type { InternalResource, InternalResourceGroup, Resource, DateEventsMap, BuildEventsResult, BuildResourcesResult } from '../types'
-// API
-import Constants from './Constants'
 // Utils
 import removeKeys from '../utils/object/RemoveKeys'
+
+const EXCLUDED_RESOURCE_FIELDS = ['id', 'nOrder', 'isGroup', 'isCollapsed', 'resources', 'maxEvents']
 
 const collapsedSet = reactive(new Set())
 
@@ -39,7 +39,7 @@ function toGroup(val: Resource, eventMap: BuildEventsResult): InternalResourceGr
     isGroup: true,
     isCollapsed,
     resources: sortByNOrder<InternalResource>(val.resources!.map(v => toResource(v, eventMap.get(v.id)))),
-    data: removeKeys(val, Constants.EXCLUDED_RESOURCE_FIELDS),
+    data: removeKeys(val, EXCLUDED_RESOURCE_FIELDS),
     open: () => collapsedSet.delete(val.id),
     close: () => collapsedSet.add(val.id)
   }
@@ -51,7 +51,7 @@ function toResource(val: Resource, events: DateEventsMap = new Map()): InternalR
     nOrder: val.nOrder,
     isEventDroppable: val.isEventDroppable ?? true,
     maxEvents: Math.max(...Array.from(events.values()).map(v => v.size), 1),
-    data: removeKeys(val, Constants.EXCLUDED_RESOURCE_FIELDS)
+    data: removeKeys(val, EXCLUDED_RESOURCE_FIELDS)
   }
 }
 

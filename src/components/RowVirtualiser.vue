@@ -1,5 +1,5 @@
 <template>
-  <div ref="el" class="cullendar-row-virtualiser">
+  <div ref="el" class="cullendar-row-virtualiser" style="position:relative;">
     <div class="cullendar-row-virtualiser-wrapper" :style="wrapperStyle">
       <slot name="wrapper"/>
       <slot
@@ -7,7 +7,9 @@
         :key="row.index"
         v-bind="{ row, data: rows[row.index] }"/>
     </div>
-    <div class="cullendar-rows-wrapper" :style="wrapperStyle">
+    <div
+      class="cullendar-rows-wrapper"
+      :style="['position:absolute;top:0;left:0;bottom:0;right:0;pointer-events:none;', wrapperStyle]">
       <slot
         v-for="row in virtualRows"
         :key="row.index"
@@ -38,7 +40,6 @@ const options = computed(() => ({
   count: props.rows.length,
   getScrollElement: () => el.value,
   estimateSize,
-  gap: props.layout.gap,
   paddingStart: props.layout.dayHeadSize,
   overscan: props.layout.overscan
 }))
@@ -63,15 +64,3 @@ function estimateSize(index: number): number {
   return resource.maxEvents * props.layout.eventSize
 }
 </script>
-
-<style scoped>
-  .cullendar-row-virtualiser, .cullendar-row-virtualiser-wrapper {
-    position: relative;
-  }
-  .cullendar-rows-wrapper {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-</style>

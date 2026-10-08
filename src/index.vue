@@ -1,8 +1,10 @@
 <template>
   <div
-    :id="id"
-    :style="{'--scrollbar-width': getScrollbarWidth() }"
-    class="cullendar">
+    :id="internal.id"
+    :data-dragging="internal.isDragging"
+    :data-resizing="internal.isResizing"
+    class="cullendar"
+    style="height:100%;display:flex;overflow:hidden;">
     <Resources
       v-slot="{ resource }"
       :rows="rows">
@@ -43,8 +45,6 @@
 import { computed, toRefs, provide, onMounted } from 'vue'
 // Types
 import type { InternalResource, InternalResourceGroup, BuildApiResult } from './types'
-// Utils
-import getScrollbarWidth from './utils/GetScrollbarWidth'
 // Components
 import Timeline from './components/Timeline.vue'
 import Resources from './components/Resources.vue'
@@ -54,7 +54,7 @@ const props = defineProps<{ cullendar: BuildApiResult }>()
 
 provide('api', props.cullendar)
 
-const { id, elements, view, resources } = toRefs(props.cullendar)
+const { internal, elements, view, resources } = toRefs(props.cullendar)
 
 const rows = computed<(InternalResource | InternalResourceGroup)[]>(() => Array.from(resources.value.values()))
 
@@ -75,14 +75,3 @@ function onScroll(e: Event): void {
 
 defineOptions({ name: 'Cullendar' })
 </script>
-
-<style scoped>
-  .cullendar {
-    height: 100%;
-    display: flex;
-    overflow: hidden;
-  }
-  .cullendar-is-resizing {
-    cursor: ew-resize;
-  }
-</style>

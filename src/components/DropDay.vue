@@ -2,7 +2,7 @@
   <div :class="classes" @mouseenter="onMouseenter">
     <span
       v-if="droppable && resource.isEventDroppable"
-      class="cullendar-day-dropzone"
+      :style="dropzoneStyle"
       @dragenter="onDragenter"
       @dragover.prevent
       @dragleave="isDragOver = false"
@@ -13,12 +13,10 @@
 
 <script lang="ts" setup>
 // Libraries
-import { ref, computed, toRefs, inject } from 'vue'
+import { ref, computed, toRefs, inject, type CSSProperties } from 'vue'
 import { Temporal } from 'temporal-polyfill'
 // Types
 import type { Event, InternalResource, BuildApiResult, ToPayloadOptions, DragDropNewTimesResult, DragDropCallbackPayload } from '../types'
-// API
-import Constants from '../api/Constants'
 // Utils
 import toArray from '../utils/ToArray'
 import isPlainDate from '../utils/date/IsPlainDate'
@@ -36,10 +34,16 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), { droppable: true })
 
 const api = inject('api') as BuildApiResult
-const { view, callbacks, resizeResourcesSet, resizeDatesSet } = toRefs(api)
+const { view, callbacks, internal } = toRefs(api)
 
 const isDragOver = ref(false)
-const isResizeOver = computed(() => resizeResourcesSet.value.has(props.resource.id) && resizeDatesSet.value.has(props.date))
+const isResizeOver = computed(() => internal.value.resizeResources.has(props.resource.id) && internal.value.resizeDates.has(props.date))
+const dropzoneStyle = computed<CSSProperties>(() => ({
+  position: 'absolute',
+  inset: 0,
+  pointerEvents: internal.value.isDragging ? 'all' : 'none',
+  zIndex: internal.value.isDragging ? 1 : undefined
+}))
 
 const classes = computed(() => [
   isDragOver.value && props.dragoverClass,
@@ -47,16 +51,16 @@ const classes = computed(() => [
 ].filter(Boolean).join(' '))
 
 function onDragenter(e: DragEvent): void {
-  if (e.dataTransfer && e.dataTransfer.types.includes(Constants.DATA_TRANSFER_TYPE))
+  if (e.dataTransfer && e.dataTransfer.types.includes(internal.value.dataTransferType))
     isDragOver.value = true
 }
 function onDrop(e: DragEvent): void {
-  if (!e.dataTransfer || !e.dataTransfer.types.includes(Constants.DATA_TRANSFER_TYPE))
+  if (!e.dataTransfer || !e.dataTransfer.types.includes(internal.value.dataTransferType))
     return
 
   isDragOver.value = false
 
-  const data = JSON.parse(e.dataTransfer.getData(Constants.DATA_TRANSFER_TYPE))
+  const data = JSON.parse(e.dataTransfer.getData(internal.value.dataTransferType))
 
   if (!data.id)
     return callbacks.value.onAddEvent(toPayload({ data }))
@@ -112,15 +116,3 @@ function onMouseenter(): void {
   callbacks.value.onDayEnter(toPayload())
 }
 </script>
-
-<style>
-  .cullendar-day-dropzone {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-  .cullendar-is-dragging .cullendar-day-dropzone {
-    pointer-events: all;
-    z-index: 1;
-  }
-</style>

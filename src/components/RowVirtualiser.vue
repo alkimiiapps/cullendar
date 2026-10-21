@@ -4,7 +4,7 @@
       <slot name="wrapper"/>
       <slot
         v-for="row in virtualRows"
-        :key="row.index"
+        :key="`row-${row.index}`"
         v-bind="{ row, data: rows[row.index] }"/>
     </div>
     <div
@@ -12,7 +12,7 @@
       :style="['position:absolute;top:0;left:0;bottom:0;right:0;pointer-events:none;', wrapperStyle]">
       <slot
         v-for="row in virtualRows"
-        :key="row.index"
+        :key="`full-row-${row.index}`"
         v-bind="{ row, data: rows[row.index] }"
         name="row"/>
     </div>

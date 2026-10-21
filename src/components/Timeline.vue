@@ -9,7 +9,7 @@
       <div class="cullendar-timeline-head" style="position:sticky;top:0;z-index:1;">
         <div
           v-for="col in virtualColumns"
-          :key="col.index"
+          :key="`col-head-${col.index}`"
           :style="toHeadStyle(col)">
           <slot name="head" v-bind="{ date: columns[col.index] }"/>
         </div>
@@ -18,7 +18,7 @@
     <template v-if="isReady" #default="{ row, data }">
       <div
         v-for="col in virtualColumns"
-        :key="col.index"
+        :key="`col-${col.index}`"
         :style="toColStyle(row, col)">
         <slot v-bind="{ resource: data, date: columns[col.index] }"/>
       </div>
